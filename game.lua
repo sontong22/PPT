@@ -55,10 +55,21 @@ function scene:create( event )
 	sceneGroup:insert( uiGroup )    -- Insert into the scene's view group
 
   -- Load assets
+  local background = display.newImageRect( backGroup, "bg.png", 1380, 1380 )
+  background.x = display.contentCenterX
+  background.y = display.contentCenterY
+
 	local table = display.newImageRect( mainGroup, "table.png", 1300, 670 )
 	table.x = display.contentCenterX
 	table.y = display.contentHeight * 0.65
-  physics.addBody( table, "dynamic", {radius = 650, friction = 0.05, bounce = 0.85} )
+  physics.addBody( table, "static", {radius = 650, friction = 0.05, bounce = 0.85} )
+
+  local scale = 0.6
+  local paddle = display.newImageRect( mainGroup, "paddle.png", 392 * scale, 574 * scale )
+  paddle.x = display.contentCenterX - 60
+  paddle.y = display.contentHeight * 0.65
+  paddle.alpha = 0.95
+  physics.addBody( paddle, "static", {radius = 200, friction = 0.08, bounce = 1} )
 end
 
 
