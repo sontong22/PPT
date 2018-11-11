@@ -1,7 +1,10 @@
------------------------------------------------------------------------------------------
---
--- main.lua
---
------------------------------------------------------------------------------------------
+local composer = require("composer")
 
--- Your code here
+-- Hide the status bar
+display.setStatusBar( display.HiddenStatusBar )
+
+-- Seed the random number generator
+math.randomseed( os.time() )
+
+-- Go to the menu screen
+composer.gotoScene( "game" )
