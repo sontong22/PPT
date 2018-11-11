@@ -14,6 +14,8 @@ physics.setGravity( 0, 0 )
 
 -- Initialize variables
 local table
+local ball
+local paddle
 local gameLoopTimer
 
 local backGroup
@@ -51,37 +53,60 @@ end
 
 local function onCollision( event )
 
-  if ( event.phase == "began" ) then
-
-    local obj1 = event.object1
-    local obj2 = event.object2
-
-    if ( ( obj1.myName == "paddle" and obj2.myName == "ball" ) or
-    ( obj1.myName == "ball" and obj2.myName == "paddle" ) )
-    then
-      -- Remove both the laser and asteroid
-      obj1.setLinearVelocity(80, - 20)
+  -- if ( event.phase == "began" ) then
   --
+  --   local obj1 = event.object1
+  --   local obj2 = event.object2
   --
-  -- elseif ( ( obj1.myName == "ship" and obj2.myName == "asteroid" ) or
-  --   ( obj1.myName == "asteroid" and obj2.myName == "ship" ) )
+  --   if ( ( obj1.myName == "paddle" and obj2.myName == "ball" ) or
+  --   ( obj1.myName == "ball" and obj2.myName == "paddle" ) )
   --   then
-  --     if ( died == false ) then
-  --       died = true
+  --     -- Remove both the laser and asteroid
+  --     local vx, vy = paddle:getLinearVelocity()
+  --     ball:setLinearVelocity(vx, vy)
+  --     ball.angularVelocity = paddle.angularVelocity
+  --     -- ball:setLinearVelocity( 0, - 400)
   --
-  --       -- Update lives
-  --       lives = lives - 1
-  --       livesText.text = "Lives: " .. lives
+  --     -- local eventXMove = (event.xStart - event.x) * - 6
+  --     -- local eventYMove = (event.yStart - event.y) * - 6
+  --     -- ball:setLinearVelocity(eventXMove, eventYMove)
+  --     -- transition.to(ball, {time=3000, x=40, y=400})
+  --     		Runtime:addEventListener("enterFrame", paddle)
+  --   end
+  -- elseif (event.phase == "moved") then
+  --   paddle.joint:setTarget(event.x, event.y)
+  --   -- local eventXMove = (event.xStart - event.x) * - 6
+  --   -- local eventYMove = (event.yStart - event.y) * - 6
+  --   -- ball:setLinearVelocity(eventXMove, eventYMove)
+  --   -- transition.cancel()
+  -- elseif phase == "cancelled" or phase == "ended" then
+  -- 	Runtime:removeEventListener("enterFrame", paddle)
+  -- 	paddle.joint:removeSelf()
   --
-  --       if ( lives == 0 ) then
-  --         display.remove( ship )
-  --       else
-  --         ship.alpha = 0
-  --         timer.performWithDelay( 1000, restoreShip )
-  --       end
-  --     end
+  -- end
+
+  local activateDash = false
+  local bx = 0
+  local by = 0
+
+  if event.phase == "began" then
+    bx = event.x
+    by = event.y
+  elseif event.phase == "moved" then
+    activateDash = true
+  elseif event.phase == "ended" then
+    if activateDash then
+      if _G.gX == 0 and _G.gY ~= 0 then
+        ball:setLinearVelocity(event.x - bx, 0)
+      elseif _G.gX ~= 0 and _G.gY == 0 then
+        ball:setLinearVelocity(0, event.y - by)
+      else
+        ball:setLinearVelocity(event.x - bx, event.y - by)
+      end
+      activateDash = false
     end
   end
+
 end
 
 local function gameLoop()
@@ -121,12 +146,12 @@ function scene:create( event )
   background.x = display.contentCenterX
   background.y = display.contentCenterY
 
-  local table = display.newImageRect( mainGroup, "table.png", 1300, 670 )
+  table = display.newImageRect( mainGroup, "table.png", 1300, 670 )
   table.x = display.contentCenterX
   table.y = display.contentHeight * 0.65
   -- physics.addBody( table, "static", {radius = 650, friction = 0.05, bounce = 0.85} )
 
-  local ball = display.newImageRect( mainGroup, "ball.png", 60, 60 )
+  ball = display.newImageRect( mainGroup, "ball.png", 60, 60 )
   ball.x = display.contentCenterX
   ball.y = display.contentHeight * 0.3
   ball.alpha = 0.95
@@ -134,16 +159,49 @@ function scene:create( event )
   ball.myName = "ball"
 
   local scale = 0.6
-  local paddle = display.newImageRect( mainGroup, "paddle.png", 392 * scale, 574 * scale )
+  paddle = display.newImageRect( mainGroup, "paddle.png", 392 * scale, 574 * scale )
   paddle.x = display.contentCenterX
   paddle.y = display.contentHeight * 0.65
   paddle.alpha = 0.95
-  physics.addBody( paddle, "static", {radius = 200, friction = 0.08, bounce = 1} )
+  physics.addBody( paddle, "static", {radius = 80, friction = 0.08, bounce = 1} )
   paddle.myName = "paddle"
 
 
   paddle:addEventListener( "touch", dragPaddle )
-
+  Runtime:addEventListener( "collision", onCollision )
+  --
+  -- local square = display.newRect(centerX, centerY, display.contentWidth*.075, display.contentWidth*.075)
+  -- physics.addBody(square)
+  -- square.gravityScale = 0
+  --
+  -- local tempBody
+  --
+  -- local function touchListener(event)
+  -- 	local phase=event.phase
+  --
+  -- 	if phase == "began" then
+  -- 		tempBody = display.newCircle(event.x, event.y, 30)
+  -- 		tempBody.isVisible=false
+  -- 		physics.addBody(tempBody)
+  -- 		tempBody.isSensor = true
+  -- 		tempBody.joint = physics.newJoint("touch", tempBody, event.x, event.y)
+  --
+  -- 		function tempBody.enterFrame(event)
+  -- 			local vx, vy = tempBody:getLinearVelocity()
+  -- 			square:setLinearVelocity(vx, vy)
+  -- 			square.angularVelocity = tempBody.angularVelocity
+  -- 		end
+  -- 		Runtime:addEventListener("enterFrame", tempBody)
+  -- 	elseif phase == "moved" then
+  -- 		tempBody.joint:setTarget(event.x, event.y)
+  -- 	elseif phase == "cancelled" or phase == "ended" then
+  -- 		Runtime:removeEventListener("enterFrame", tempBody)
+  -- 		tempBody.joint:removeSelf()
+  -- 		display.remove(tempBody)
+  -- 	end
+  -- end
+  --
+  -- Runtime:addEventListener("touch", touchListener)
 end
 
 
@@ -168,7 +226,7 @@ function scene:show( event )
 
   physics.start()
   physics.setGravity(0, 9.8)
-  Runtime:addEventListener( "collision", onCollision )
+  -- transition.to(ball, {time=3000, x=40, y=400})
 
 end
 
